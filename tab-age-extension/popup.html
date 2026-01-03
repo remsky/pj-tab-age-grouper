@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="top-controls">
+    <button class="control-btn active" id="themeToggle" title="Toggle theme">&#128167;</button>
+    <button class="control-btn" id="pauseToggle" title="Pause/Resume grouping">&#9724;</button>
+  </div>
+
+  <div class="bubbles">
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+  </div>
+
+  <div class="glass-container">
+    <div class="header">
+      <h2>PJ Tab Age Grouper</h2>
+    </div>
+
+    <div class="control-group">
+      <div class="label-row">
+        <span class="value fresh">Fresh</span>
+        <span class="value stale" id="warnValue">1m</span>
+        <span class="value dead" id="deadValue">2m</span>
+      </div>
+      <div class="dual-slider">
+        <div class="slider-zone-fresh" id="zoneFresh"></div>
+        <div class="slider-zone-stale" id="zoneStale"></div>
+        <div class="slider-zone-dead" id="zoneDead"></div>
+        <input type="range" id="warnInput" min="0" max="100" step="0.5" value="20">
+        <input type="range" id="deadInput" min="0" max="100" step="0.5" value="40">
+      </div>
+      <div class="slider-labels">
+        <span>30s</span>
+        <span>2 weeks</span>
+      </div>
+    </div>
+
+    <button id="saveBtn">
+      <span class="btn-shine"></span>
+      Apply
+    </button>
+
+    <div id="status" class="status">Saved!</div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
