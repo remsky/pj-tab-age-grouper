@@ -78,9 +78,57 @@ chrome.tabs.onActivated.addListener(() => {
   setTimeout(organizeTabs, 100);
 });
 
+// Manual cleanup trigger from the popup ("Clean up now" button)
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg && msg.action === 'cleanupNow') {
+    cleanupNow().then(() => sendResponse({ ok: true }));
+    return true; // keep the message channel open for the async response
+  }
+});
+
+// Merge duplicates and re-organize on demand. Works even while paused so the
+// user can always collapse a pile of stale/dead groups back down to one each.
+async function cleanupNow() {
+  await cleanupDuplicateGroups();
+  if (isPaused) {
+    await reorderGroups();
+  } else {
+    await organizeTabs();
+  }
+}
+
+// Re-entrancy guard: organizeTabs can be triggered concurrently by the alarm,
+// tab activation, and storage changes. Without this, two overlapping runs can
+// each decide a group doesn't exist yet and both create one, producing the
+// duplicate Stale/Dead groups that accumulate over time. The guard serializes
+// runs and coalesces any request that arrives mid-run into a single rerun.
+let isOrganizing = false;
+let rerunRequested = false;
+
 async function organizeTabs() {
   // Skip organizing if extension is paused
   if (isPaused) return;
+
+  if (isOrganizing) {
+    rerunRequested = true;
+    return;
+  }
+
+  isOrganizing = true;
+  try {
+    do {
+      rerunRequested = false;
+      await organizeTabsPass();
+    } while (rerunRequested && !isPaused);
+  } finally {
+    isOrganizing = false;
+  }
+}
+
+async function organizeTabsPass() {
+  // Merge any duplicate groups before classifying, so a single keeper group
+  // exists per title/window for tabs to be added to.
+  await cleanupDuplicateGroups();
 
   const tabs = await chrome.tabs.query({});
   const now = Date.now();

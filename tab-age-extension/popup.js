@@ -130,6 +130,21 @@ document.getElementById('saveBtn').addEventListener('click', () => {
   });
 });
 
+// Manual bulk cleanup - merge duplicate Stale/Dead groups into one each
+document.getElementById('cleanupBtn').addEventListener('click', () => {
+  const btn = document.getElementById('cleanupBtn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Cleaning…';
+  chrome.runtime.sendMessage({ action: 'cleanupNow' }, () => {
+    btn.textContent = 'Cleaned up!';
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.disabled = false;
+    }, 1500);
+  });
+});
+
 // Manual input on value badge click
 function showManualInput(valueEl, inputEl, isWarn) {
   const currentMins = sliderToMinutes(parseFloat(inputEl.value));
