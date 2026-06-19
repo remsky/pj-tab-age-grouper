@@ -38,13 +38,26 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 // Also run immediately when extension loads/reloads
-chrome.runtime.onStartup.addListener(async () => {
-  await cleanupDuplicateGroups();
-  organizeTabs();
-});
-chrome.runtime.onInstalled.addListener(async () => {
-  await cleanupDuplicateGroups();
-  organizeTabs();
+chrome.runtime.onStartup.addListener(scheduleStartupCleanup);
+chrome.runtime.onInstalled.addListener(scheduleStartupCleanup);
+
+// Chrome restores the previous session's windows and tabs asynchronously after
+// launch, typically AFTER onStartup fires. A single cleanup pass therefore runs
+// against a half-restored set of windows and misses the Stale/Dead groups that
+// restore brings back a moment later - which is how duplicates accumulated
+// across every browser restart. Run several staggered passes so duplicates get
+// merged as the session finishes restoring.
+function scheduleStartupCleanup() {
+  for (const delay of [0, 1000, 3000, 8000, 15000]) {
+    setTimeout(() => { cleanupNow(); }, delay);
+  }
+}
+
+// Each restored window arrives as an onCreated event during session restore;
+// re-running here merges any duplicates immediately instead of waiting for the
+// next alarm. The re-entrancy guard coalesces the burst of restore events.
+chrome.windows.onCreated.addListener(() => {
+  cleanupNow();
 });
 
 // Merge duplicate groups (same title in same window)
